@@ -7,4 +7,5 @@
                  [compojure "1.3.2"]
                  [ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
-                 [org.clojars.aperiodic/quil "1.6.1"]])
+                 [org.clojars.aperiodic/quil "1.6.1"]
+                 [aperiodic/qutils "0.1.0-SNAPSHOT"]])
