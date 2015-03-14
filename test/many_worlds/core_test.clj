@@ -29,3 +29,27 @@
     (is (= :curve (curve-for-t (mk-state 13 2) 13)))
     (is (nil? (curve-for-t (mk-state 1 2) 3)))
     (is (nil? (curve-for-t nil 3)))))
+
+(deftest position-at-test
+  (let [!state @#'many-worlds.core/!state]
+    (testing "nil returned when state is unitialized"
+      (reset! !state nil)
+      (is (nil? (position-at 1)))
+      (is (nil? (position-at 11))))
+
+  (testing "nil returned when t is negative"
+    (setup! 3)
+    (is (nil? (position-at -1)))
+    (is (nil? (position-at -11))))
+
+  (let [seg-length 2
+        normalized-three-vec? (fn [x]
+                                (and (vector? x)
+                                     (= (count x) 3)
+                                     (every? number? x)))]
+    (setup! 3 {:segment-length seg-length})
+    (is (normalized-three-vec? (position-at 0.5)))
+    (is (normalized-three-vec? (position-at 10.5)))
+    (testing "backfilling is performed"
+      (doseq [k (range 0 10.5 seg-length)]
+        (is (curve-for-t @!state k)))))))

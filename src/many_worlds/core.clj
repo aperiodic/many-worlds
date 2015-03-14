@@ -74,3 +74,37 @@
   (if state
     (let [{:keys [path segment-length]} state]
       (get path (-> (quot t segment-length) (* segment-length) int)))))
+
+(defn backfill-segments
+  "This produces a derived state after augmenting the path with all the segments
+  that will fit between the highest key in the state's path and the `until`
+  time."
+  [state until]
+  (let [{:keys [path n segment-length min-point max-point]} state
+        t-1 (last (keys path))
+        new-seg (fn [t]
+                  (let [pts (sample-control-points n min-point max-point)]
+                    (animation (curve/bezier pts) t segment-length)))]
+    (update-in state [:path] #(reduce (fn [path t] (assoc path t (new-seg t)))
+                                      %
+                                      (range t-1 until segment-length)))))
+
+(defn position-at
+  "Return the position vector of the random bezier walk at time `t`, unless
+  state has not been initialized by calling `setup!`, in which case nil is
+  returned instead. If `t` is less than zero, the return value will be nil.
+
+  Note that this backfills this namespace's hidden state. If you're
+  fast-forwarding by giving successive ts with stride larger than the state's
+  configured segment-length, not only will you not have a smooth animation,
+  you'll be potentially allocating many animations each frame, which will not be
+  freed until `setup!` is called agian."
+  [t]
+  (if-let [state @!state]
+    (cond
+      (neg? t) nil
+      (curve-for-t state t) (let [bez (curve-for-t state t)] (bez t))
+      :else (let [bez (curve-for-t (swap! !state backfill-segments t) t)]
+              (bez t)))
+    ;; else (state not yet initialized)
+    nil))
