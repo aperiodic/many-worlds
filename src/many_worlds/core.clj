@@ -20,9 +20,11 @@
    ;; each segment set to this value.
    :max 1})
 
-(defn sample-control-points
-  [n min-point max-point]
-  (repeatedly n #(vec/rand-point min-point max-point)))
+(defn rand-control-points
+  ([n min max] (rand-control-points n min max (vec/rand-point min max)))
+  ([n min max start]
+   (conj (repeatedly (dec n) #(vec/rand-point min max))
+         start)))
 
 (defn setup!
   "Initialize a random bezier walk through an `n` dimensional state space. The
@@ -61,7 +63,7 @@
      (when-not (number? max)
        (throw (IllegalArgumentException. "`max` option must be a number.")))
 
-     (let [ctrl-pts (sample-control-points n min-point max-point)
+     (let [ctrl-pts (rand-control-points n min-point max-point)
            first-segment (animation (curve/bezier ctrl-pts) 0 segment-length)]
        (reset! !state {:path (sorted-map 0 first-segment)
                        :n n :segment-length segment-length
@@ -78,16 +80,22 @@
 (defn backfill-segments
   "This produces a derived state after augmenting the path with all the segments
   that will fit between the highest key in the state's path and the `until`
-  time."
+  time (inclusive)."
   [state until]
   (let [{:keys [path n segment-length min-point max-point]} state
-        t-1 (last (keys path))
-        new-seg (fn [t]
-                  (let [pts (sample-control-points n min-point max-point)]
-                    (animation (curve/bezier pts) t segment-length)))]
-    (update-in state [:path] #(reduce (fn [path t] (assoc path t (new-seg t)))
+        new-seg (fn [t p0]
+                  (let [pts (rand-control-points n min-point max-point p0)]
+                    (animation (curve/bezier pts) t segment-length)))
+        assoc-new-seg (fn [path t]
+                        (let [last-seg (get path (- t segment-length))
+                              p0 (-> last-seg :curve :points last)]
+                          (assoc path t (new-seg t p0))))
+        t0 (last (keys path))]
+    (update-in state [:path] #(reduce assoc-new-seg
                                       %
-                                      (range t-1 until segment-length)))))
+                                      (range (+ t0 segment-length)
+                                             (inc until)
+                                             segment-length)))))
 
 (defn position-at
   "Return the position vector of the random bezier walk at time `t`, unless

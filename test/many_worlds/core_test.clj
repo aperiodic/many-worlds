@@ -1,6 +1,7 @@
 (ns many-worlds.core-test
   (:require [clojure.test :refer :all]
-            [many-worlds.core :refer :all]))
+            [many-worlds.core :refer :all]
+            [qutils.vector :refer [dist]]))
 
 (deftest setup!-test
   (is (= {:n 3, :segment-length 2, :min-point [0 0 0], :max-point [1 1 1]}
@@ -48,8 +49,21 @@
                                      (= (count x) 3)
                                      (every? number? x)))]
     (setup! 3 {:segment-length seg-length})
-    (is (normalized-three-vec? (position-at 0.5)))
-    (is (normalized-three-vec? (position-at 10.5)))
-    (testing "backfilling is performed"
-      (doseq [k (range 0 10.5 seg-length)]
-        (is (curve-for-t @!state k)))))))
+    (let [p (position-at 0.5)]
+      (is (normalized-three-vec? p))
+      (is (normalized-three-vec? (position-at 10)))
+
+      (testing "backfilling is performed"
+        (doseq [t (range 0 10.1 seg-length)]
+          (is (curve-for-t @!state t))))
+
+      (testing "backfilling doesn't change extant path segments"
+        (is (= p (position-at 0.5))))
+
+      (testing "segments start and end close together"
+        (doseq [t (range 0 10.1 seg-length)
+                :let [t-prev (- t 0.01)
+                      t-next (+ t 0.01)
+                      p-prev (position-at t-prev)
+                      p-next (position-at t-next)]]
+          (is (< (dist p-prev p-next) 0.1))))))))
