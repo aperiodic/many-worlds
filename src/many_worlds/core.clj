@@ -66,3 +66,11 @@
        (reset! !state {:path (sorted-map 0 first-segment)
                        :n n :segment-length segment-length
                        :max-point max-point, :min-point min-point})))))
+
+(defn curve-for-t
+  "If there is a segment of the path in `state` that encompasses `t`, return
+  that segment. If not, return nil."
+  [state t]
+  (if state
+    (let [{:keys [path segment-length]} state]
+      (get path (-> (quot t segment-length) (* segment-length) int)))))
