@@ -3,6 +3,8 @@
             [qutils.curve :as curve]
             [qutils.vector :as vec]))
 
+(def bezier-order 4)
+
 (def ^:private !state (atom nil))
 
 (def defaults
@@ -63,7 +65,7 @@
      (when-not (number? max)
        (throw (IllegalArgumentException. "`max` option must be a number.")))
 
-     (let [ctrl-pts (rand-control-points n min-point max-point)
+     (let [ctrl-pts (rand-control-points bezier-order min-point max-point)
            first-segment (animation (curve/bezier ctrl-pts) 0 segment-length)]
        (reset! !state {:path (sorted-map 0 first-segment)
                        :n n :segment-length segment-length
@@ -84,7 +86,7 @@
   [state until]
   (let [{:keys [path n segment-length min-point max-point]} state
         new-seg (fn [t p0]
-                  (let [pts (rand-control-points n min-point max-point p0)]
+                  (let [pts (rand-control-points bezier-order min-point max-point p0)]
                     (animation (curve/bezier pts) t segment-length)))
         assoc-new-seg (fn [path t]
                         (let [last-seg (get path (- t segment-length))
