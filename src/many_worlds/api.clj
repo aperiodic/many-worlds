@@ -41,10 +41,14 @@
       (.getImage g))))
 
 (defn handler
-  "Given a state atom, quil sketch, nominal sketch width and height, and
-  configure and draw functions for the sketch, define an API handler that serves
-  rendered images of the sketch, the state atom's current value, and can reset
-  the state atom with a submitted state value.
+  "Given a state atom, a var containing a quil sketch, nominal sketch width and
+  height, and configure and draw functions for the sketch, define an API handler
+  that serves rendered images of the sketch, the state atom's current value, and
+  can reset the state atom with a submitted state value.
+
+  The `draw!` function must be a function of `t`. Any other state it wishes to
+  rely on it must handle itself; if only the current position of the bezier walk
+  is needed, then `t` alone will suffice.
 
   The `configure!` function should *not* be the sketch's setup function, since it
   will be called every time that a frame is rendered. The purpose of the
@@ -73,7 +77,7 @@
       then the time corresponding to the start of the last generated bezier
       segment of the random walk is used.
   "
-  [!state sketch w h configure! draw!]
+  [!state sketch-var w h configure! draw!]
   (-> (routes
         (GET "/state" [] (pr-str @!state))
 
@@ -83,7 +87,7 @@
 
         (GET "/frame.png" [t scale]
              (let [{:keys [t s]} (parse-frame-opts {:t t, :s scale} @!state)
-                   image (render-frame sketch w h configure! draw! t s)
+                   image (render-frame @sketch-var w h configure! draw! t s)
                    stream (new ByteArrayOutputStream)]
                (ImageIO/write image "PNG" stream)
                {:status 200
