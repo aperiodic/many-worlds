@@ -1,11 +1,16 @@
 (ns many-worlds.core
-  (:require [qutils.animation :refer [animation]]
+  (:require [many-worlds.api :as api]
+            [qutils.animation :refer [animation]]
             [qutils.curve :as curve]
-            [qutils.vector :as vec]))
+            [qutils.vector :as vec]
+            [ring.adapter.jetty :refer [run-jetty]]))
 
 (def bezier-order 4)
 
 (def ^:private !state (atom nil))
+
+;; this is not intended to be synchronized with the state of the bezier walk
+(def !api-state (atom {:server nil, :starter-id nil, :stopper-id nil}))
 
 (def defaults
   {;; The random bezier walk is composed of cubic bezier curve segments. This
@@ -20,12 +25,34 @@
    ;; The value to use for each segment of the default max-point. Put another
    ;; way, the default max-point is constructed by creating an n-vector with
    ;; each segment set to this value.
-   :max 1})
+   :max 1
+   :port 3000})
 
 (defn rand-control-points
   ([n min max] (rand-control-points n min max (vec/rand-point min max)))
   ([n min max start]
    (concat [start] (repeatedly (dec n) #(vec/rand-point min max)))))
+
+(defn stop-server!
+  []
+  (if-let [server (:server @!api-state)]
+    (let [me (.getId (java.lang.Thread/currentThread))
+          {:keys [stopper-id]} (swap! !api-state update-in [:stopper-id] (fnil identity me))]
+      (when (= stopper-id me)
+        (swap! !api-state
+               (fn [{:keys [server]}]
+                 (when server (.stop server))
+                 {:server nil, :stopper-id nil, :starter-id nil}))))))
+
+(defn start-server!
+  [handler port]
+  (stop-server!)
+  (when handler
+    (let [me (.getId (java.lang.Thread/currentThread))
+          {:keys [starter-id]} (swap! !api-state update-in [:starter-id] (fnil identity me))]
+      (when (= starter-id me)
+        (let [server (run-jetty handler {:port port, :join? false})]
+          (swap! !api-state assoc :server server :starter-id nil :stopper-id nil))))))
 
 (defn setup!
   "Initialize a random bezier walk through an `n` dimensional state space. The
@@ -49,12 +76,22 @@
       constructed by creating an n-vector with each segment set to `:min` or
       `:max` as appropriate. The default `:min` value is 0, and the default
       `:max` value is 1.
+
+    - :port
+      The port on which to run the Many Worlds API server. The API server is
+      used to obtain frames of the sketch at some given time `t`, to serve the
+      current state of the bezier walk, and to reset the bezier walk state with
+      a state submitted in a request body.
   "
   ([n] (setup! n {}))
-  ([n options]
-   (let [{:keys [segment-length min-point max-point min max]} (merge defaults options)
+  ([n options] (setup! n options nil nil nil nil nil))
+  ([n options sketch-var w h configure-quil! draw!]
+
+   (let [{:keys [segment-length min-point max-point min max port]} (merge defaults options)
          min-point (or min-point (vec (repeat n min)))
-         max-point (or max-point (vec (repeat n max)))]
+         max-point (or max-point (vec (repeat n max)))
+         handler (if (and sketch-var w h configure-quil! draw!)
+                   (api/handler !state sketch-var w h configure-quil! draw!))]
 
      (when-not (= n (count min-point) (count max-point))
        (throw (IllegalArgumentException. (str "inconsistent dimensions between `n`, `min-point`,"
@@ -63,6 +100,8 @@
        (throw (IllegalArgumentException. "`min` option must be a number.")))
      (when-not (number? max)
        (throw (IllegalArgumentException. "`max` option must be a number.")))
+
+     (when handler (start-server! handler port))
 
      (let [ctrl-pts (rand-control-points bezier-order min-point max-point)
            first-segment (animation (curve/bezier ctrl-pts) 0 segment-length)]
