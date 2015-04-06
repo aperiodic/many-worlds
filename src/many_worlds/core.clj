@@ -25,8 +25,7 @@
 (defn rand-control-points
   ([n min max] (rand-control-points n min max (vec/rand-point min max)))
   ([n min max start]
-   (conj (repeatedly (dec n) #(vec/rand-point min max))
-         start)))
+   (concat [start] (repeatedly (dec n) #(vec/rand-point min max)))))
 
 (defn setup!
   "Initialize a random bezier walk through an `n` dimensional state space. The
