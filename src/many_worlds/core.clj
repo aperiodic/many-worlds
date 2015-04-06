@@ -89,7 +89,7 @@
                   (let [pts (rand-control-points bezier-order min-point max-point p0)]
                     (animation (curve/bezier pts) t segment-length)))
         assoc-new-seg (fn [path t]
-                        (let [last-seg (get path (- t segment-length))
+                        (let [last-seg (get path (last (keys path)))
                               p0 (-> last-seg :curve :points last)]
                           (assoc path t (new-seg t p0))))
         t0 (last (keys path))]
