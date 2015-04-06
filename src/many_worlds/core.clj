@@ -106,7 +106,7 @@
   fast-forwarding by giving successive ts with stride larger than the state's
   configured segment-length, not only will you not have a smooth animation,
   you'll be potentially allocating many animations each frame, which will not be
-  freed until `setup!` is called agian."
+  freed until `setup!` is called again."
   [t]
   (if-let [state @!state]
     (cond
