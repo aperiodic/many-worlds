@@ -6,8 +6,10 @@
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-3126"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [compojure "1.3.2"]
                  [figwheel "0.2.5"]
+                 [org.omcljs/om "0.8.8"]
                  [ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
                  [org.clojars.aperiodic/quil "1.6.1"]
