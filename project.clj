@@ -7,6 +7,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-3126"]
                  [compojure "1.3.2"]
+                 [figwheel "0.2.5"]
                  [ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
                  [org.clojars.aperiodic/quil "1.6.1"]
@@ -16,6 +17,7 @@
 
   :profiles {:dev {:source-paths ["src/clj" "dev"]
                    :plugins [[lein-cljsbuild "1.0.4"]
+                             [lein-figwheel "0.2.5"]
                              [lein-ring "0.9.3"]]}}
 
   :cljsbuild {
@@ -25,4 +27,5 @@
                               :optimizations :none
                               :source-map true}}}}
 
+  :figwheel {:server-port 3449}
   :ring {:handler many-worlds.api.dev/dev-handler})
