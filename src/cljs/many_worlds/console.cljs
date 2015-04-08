@@ -1,7 +1,7 @@
 (ns many-worlds.console
   (:require [figwheel.client :as fw]
             [om.core :as om]
-            [om.dom :as dom]))
+            [sablono.core :as html :refer-macros [html]]))
 
 (enable-console-print!)
 
@@ -15,7 +15,7 @@
 
       om/IRender
       (render [_]
-        (dom/h1 nil (:text state)))
+        (html [:h1 (:text state)]))
 
       om/IWillUnmount
       (will-unmount [_] (println "unmounting component...."))))

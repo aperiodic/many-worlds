@@ -10,10 +10,11 @@
                  [compojure "1.3.2"]
                  [figwheel "0.2.5"]
                  [org.omcljs/om "0.8.8"]
+                 [quil "1.7.0"]
+                 [aperiodic/qutils "0.1.0-SNAPSHOT"]
                  [ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
-                 [org.clojars.aperiodic/quil "1.6.1"]
-                 [aperiodic/qutils "0.1.0-SNAPSHOT"]]
+                 [sablono "0.3.4"]]
 
   :source-paths ["src/clj"]
 
