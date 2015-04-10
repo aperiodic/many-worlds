@@ -23,8 +23,11 @@
   !state
   {:target (. js/document (getElementById "console"))})
 
+;;
+;; Figwheel Client Initialization
+;;
+
 (fw/start
-  {:websocket-url "ws://localhost:3449/figwheel-ws"
-   :on-jsload (fn [] (println "reloaded"))})
+  {:websocket-url "ws://localhost:3449/figwheel-ws"})
 
 (swap! !state assoc :text "Hello, world!")
