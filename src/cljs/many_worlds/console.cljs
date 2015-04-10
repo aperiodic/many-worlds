@@ -5,20 +5,54 @@
 
 (enable-console-print!)
 
+;;
+;; Utilities
+;;
+
+(defn frame-url
+  [world-base-url]
+  (str world-base-url "/frame.png"))
+
+;;
+;; State
+;;
+
 (defonce !state (atom {}))
+
+;;
+;; Components
+;;
+
+(defn add-world
+  [state owner]
+  (let [new-world (.-value (om/get-node owner "new-world"))]
+    (when-not (empty? new-world)
+      (om/transact! state :worlds #((fnil conj []) % new-world)))))
+
+(defn add-world-component
+  "The component that allows the user to add a 'world' (a URL for an instance of the many-worlds API)."
+  [state owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div#add-world
+         [:span "Add world server:"]
+         [:input {:type :text :ref "new-world"}]
+         [:button {:on-click (fn [_] (add-world state owner))} "Add World"]]))))
+
+;;
+;; Om App
+;;
 
 (om/root
   (fn [state owner]
     (reify
-      om/IWillMount
-      (will-mount [_] (println "mounting component..."))
-
       om/IRender
       (render [_]
-        (html [:h1 (:text state)]))
-
-      om/IWillUnmount
-      (will-unmount [_] (println "unmounting component...."))))
+        (html
+          [:div#many-worlds-console
+           (om/build add-world-component state)]))))
 
   !state
   {:target (. js/document (getElementById "console"))})
