@@ -17,7 +17,7 @@
 ;; State
 ;;
 
-(defonce !state (atom {}))
+(defonce !state (atom {:worlds []}))
 
 ;;
 ;; Components
@@ -26,13 +26,13 @@
 (defn previews-component
   "The component that generates the grid of image previews of the various worlds
   that the console is configured to connect to."
-  [worlds owner]
+  [state owner]
   (reify
     om/IRender
     (render [_]
       (html
         [:div.worlds
-         (for [world worlds]
+         (for [world (:worlds state)]
            [:div.world {:key world}
             [:img {:src (frame-url world)}]])]))))
 
@@ -65,7 +65,7 @@
       (render [_]
         (html
           [:div#many-worlds-console
-           (om/build previews-component (:worlds state))
+           (om/build previews-component state)
            (om/build add-world-component state)]))))
 
   !state
