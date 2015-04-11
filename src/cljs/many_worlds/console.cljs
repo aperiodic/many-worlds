@@ -59,7 +59,7 @@
     (render-state [_ {text :text :as comp-state}]
       (html
         [:div#add-world
-         [:span "Add world server:"]
+         [:span.label "Add world server:"]
          [:input {:type "text", :ref "new-world", :value text
                   :on-change #(update-text % owner comp-state)}]
          [:button {:on-click #(add-world state owner)}
