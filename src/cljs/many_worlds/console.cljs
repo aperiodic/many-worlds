@@ -77,5 +77,3 @@
 
 (fw/start
   {:websocket-url "ws://localhost:3449/figwheel-ws"})
-
-(swap! !state assoc :text "Hello, world!")
