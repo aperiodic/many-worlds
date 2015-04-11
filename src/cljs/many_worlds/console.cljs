@@ -10,8 +10,8 @@
 ;;
 
 (defn frame-url
-  [world-base-url]
-  (str world-base-url "/frame.png"))
+  [world-url t]
+  (str world-url "/frame.png?t=" t))
 
 ;;
 ;; State
@@ -30,11 +30,12 @@
   (reify
     om/IRender
     (render [_]
-      (html
-        [:div.worlds
-         (for [world (:worlds state)]
-           [:div.world {:key world}
-            [:img {:src (frame-url world)}]])]))))
+      (let [t (:t state 0)]
+        (html
+          [:div.worlds
+           (for [world (:worlds state)]
+             [:div.world {:key world}
+              [:img {:src (frame-url world t)}]])])))))
 
 (defn add-world
   [state owner]
