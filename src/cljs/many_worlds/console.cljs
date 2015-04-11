@@ -41,19 +41,29 @@
   [state owner]
   (let [new-world (.-value (om/get-node owner "new-world"))]
     (when-not (empty? new-world)
-      (om/transact! state :worlds #((fnil conj []) % new-world)))))
+      (om/transact! state :worlds #((fnil conj []) % new-world))
+      (om/set-state! owner :text ""))))
+
+(defn- update-text
+  [event owner {text :text}]
+  (om/set-state! owner :text (.. event -target -value)))
 
 (defn add-world-component
-  "The component that allows the user to add a 'world' (a URL for an instance of the many-worlds API)."
+  "The component that allows the user to add a 'world' (a URL for an instance of
+  the many-worlds API)."
   [state owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_] {:text ""})
+    om/IRenderState
+    (render-state [_ {text :text :as comp-state}]
       (html
         [:div#add-world
          [:span "Add world server:"]
-         [:input {:type :text :ref "new-world"}]
-         [:button {:on-click (fn [_] (add-world state owner))} "Add World"]]))))
+         [:input {:type "text", :ref "new-world", :value text
+                  :on-change #(update-text % owner comp-state)}]
+         [:button {:on-click #(add-world state owner)}
+          "Add World"]]))))
 
 ;;
 ;; Om App
