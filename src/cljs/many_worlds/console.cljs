@@ -1,5 +1,7 @@
 (ns many-worlds.console
-  (:require [figwheel.client :as fw]
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
+  (:require [cljs.core.async :refer [<! >! alts! chan close! put! timeout]]
+            [figwheel.client :as fw]
             [om.core :as om]
             [sablono.core :as html :refer-macros [html]]))
 
@@ -67,15 +69,31 @@
          [:button {:on-click #(add-world state owner)}
           "Add World"]]))))
 
-(def delta-t
+(def jump-delta-t
   "In order to calculate how far to jump around when skipping, multiply this
-  delta by the current speed. With the default speed of 1 the jump will be just
+  delta by the current speed. With the default speed of 2 the jump will be twice
   this value, in seconds."
-  0.25)
+  1.0)
+
+(def delta-t-ms
+  "The time delta for previews; previews update at this interval in ms, and they
+  advance by this interval in ms times the current speed."
+  90)
+
+(defonce time-control (chan 1))
 
 (defn time-component
   [{:keys [t speed] :as time} owner]
   (reify
+    om/IWillMount
+    (will-mount [_]
+      (go-loop [[msg _] (alts! [time-control (timeout delta-t-ms)])]
+        (when-not (= msg :terminate)
+          (om/transact! time (fn [{:keys [speed t] :as time}]
+                               (let [delta-t-s (/ delta-t-ms 1000.0)]
+                                 (update-in time [:t] + (* speed delta-t-s)))))
+          (recur (alts! [time-control (timeout delta-t-ms)] :priority true)))))
+
     om/IRender
     (render [_]
       (let [reset-speed #(om/transact! time :speed (constantly 2))
@@ -88,7 +106,7 @@
                                          (update-in [:t] max 0))))
             skip-ahead #(om/transact! time
                                       (fn [{:keys [speed] :as time}]
-                                        (update-in time [:t] + (* speed delta-t))))]
+                                        (update-in time [:t] + (* speed jump-delta-t))))]
         (html
           [:div#time
            [:button.skip-back {:on-click skip-back} "⏮"]
@@ -97,7 +115,11 @@
            [:span.speed-display (str "(" (.toFixed speed 1) "x)")]
            [:button.fast-forward {:on-click ff} "⏩"]
            [:button.skip-ahead {:on-click skip-ahead} "⏭"]
-           [:button.reset-speed  {:on-click reset-speed} "speed = 2x"]])))))
+           [:button.reset-speed  {:on-click reset-speed} "speed = 2x"]])))
+
+    om/IWillUnmount
+    (will-unmount [_]
+      (put! time-control :terminate))))
 
 ;;
 ;; Om App
