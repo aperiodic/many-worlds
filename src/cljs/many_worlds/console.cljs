@@ -1,6 +1,8 @@
 (ns many-worlds.console
   (:require-macros [cljs.core.async.macros :refer [go-loop]])
-  (:require [cljs.core.async :refer [<! >! alts! chan close! put! timeout]]
+  (:require [ajax.core :as ajax]
+            [cljs.core.async :refer [<! >! alts! chan close! put! timeout]]
+            [clojure.string :as str]
             [figwheel.client :as fw]
             [om.core :as om]
             [sablono.core :as html :refer-macros [html]]))
@@ -13,19 +15,48 @@
 
 (defn frame-url
   [world-url t]
-  (str world-url "/frame.png?t=" t))
+  (str world-url "/frame.png?t=" (.toFixed t 2)))
+
+(defn state-url
+  [world-url]
+  (str world-url "/state"))
+
+(defn location
+  []
+  (-> (.-location js/document)
+    str
+    (str/replace #"/$" "")))
 
 ;;
 ;; State
 ;;
 
 (defonce !state
-  (atom {:worlds []
+  (atom {:worlds [(location)]
          :time {:t 0, :speed 2}}))
 
 ;;
 ;; Application Actions
 ;;
+
+(defonce world-reset (chan 1))
+
+(defonce world-resetter
+  (go-loop []
+    (let [state (<! world-reset)]
+      (doseq [world (:worlds @!state)]
+        (ajax/PUT (state-url world)
+                  {:params state
+                   :format {:content-type "application/edn"
+                            :write identity}}))
+      (recur))))
+
+(defn reset-worlds
+  "Reset the states of all worlds to use the state of the given world."
+  [world-url]
+  (ajax/GET (state-url world-url)
+            {:response-format :raw
+             :handler (fn [resp] (put! world-reset resp))}))
 
 (defn add-world
   [state owner]
@@ -50,7 +81,8 @@
           [:div.worlds
            (for [world (:worlds state)]
              [:div.world {:key world}
-              [:img {:src (frame-url world t)}]])])))))
+              [:a {:href "#", :on-click #(reset-worlds world)}
+               [:img {:src (frame-url world t)}]]])])))))
 
 (defn- update-text
   [event owner {text :text}]
