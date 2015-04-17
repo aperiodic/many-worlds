@@ -24,6 +24,17 @@
          :time {:t 0, :speed 2}}))
 
 ;;
+;; Application Actions
+;;
+
+(defn add-world
+  [state owner]
+  (let [new-world (.-value (om/get-node owner "new-world"))]
+    (when-not (empty? new-world)
+      (om/transact! state :worlds #((fnil conj []) % new-world))
+      (om/set-state! owner :text ""))))
+
+;;
 ;; Components
 ;;
 
@@ -40,13 +51,6 @@
            (for [world (:worlds state)]
              [:div.world {:key world}
               [:img {:src (frame-url world t)}]])])))))
-
-(defn add-world
-  [state owner]
-  (let [new-world (.-value (om/get-node owner "new-world"))]
-    (when-not (empty? new-world)
-      (om/transact! state :worlds #((fnil conj []) % new-world))
-      (om/set-state! owner :text ""))))
 
 (defn- update-text
   [event owner {text :text}]
