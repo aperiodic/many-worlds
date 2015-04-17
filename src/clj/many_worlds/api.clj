@@ -1,5 +1,6 @@
 (ns many-worlds.api
   (:require [compojure.core :refer [GET PUT routes]]
+            [compojure.route :as route]
             [quil.core :as quil]
             [quil.applet :refer [*applet*]]
             [qutils.util :refer [restore-state]]
@@ -92,7 +93,11 @@
                (ImageIO/write image "PNG" stream)
                {:status 200
                 :headers {"Content-Type" "image/png"}
-                :body (ByteArrayInputStream. (.toByteArray stream))})))
+                :body (ByteArrayInputStream. (.toByteArray stream))}))
+
+        ;; console application
+        (GET "/" [] (resp/resource-response "public/index.html"))
+        (route/resources ""))
 
     wrap-keyword-params
     wrap-params))
