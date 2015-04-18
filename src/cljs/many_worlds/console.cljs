@@ -50,7 +50,7 @@
 
 (defonce !state
   (atom {:worlds [(location)]
-         :time {:t 0, :speed 2}
+         :time {:t 0, :speed 2, :paused? false}
          :preview-width 320}))
 
 ;;
@@ -134,14 +134,17 @@
     (will-mount [_]
       (go-loop [[msg _] (alts! [time-control (timeout delta-t-ms)])]
         (when-not (= msg :terminate)
-          (om/transact! time (fn [{:keys [speed t] :as time}]
-                               (let [delta-t-s (/ delta-t-ms 1000.0)]
-                                 (update-in time [:t] + (* speed delta-t-s)))))
+          (om/transact! time (fn [{:keys [speed t paused?] :as time}]
+                               (if paused?
+                                 time
+                                 (let [delta-t-s (/ delta-t-ms 1000.0)]
+                                   (update-in time [:t] + (* speed delta-t-s))))))
           (recur (alts! [time-control (timeout delta-t-ms)] :priority true)))))
 
     om/IRender
     (render [_]
       (let [reset-speed #(om/transact! time :speed (constantly 2))
+            pause #(om/transact! time :paused? not)
             ff #(om/transact! time :speed (fn [speed] (+ speed 0.5)))
             fb #(om/transact! time :speed (fn [speed] (max (- speed 0.5) 1.0)))
             skip-back #(om/transact! time
@@ -158,6 +161,7 @@
            [:button.fast-backward {:on-click fb} "⏪"]
            [:span.time-display (str "t: " (.toFixed t 1))]
            [:span.speed-display (str "(" (.toFixed speed 1) "x)")]
+           [:button.pause {:on-click pause} "⏯"]
            [:button.fast-forward {:on-click ff} "⏩"]
            [:button.skip-ahead {:on-click skip-ahead} "⏭"]
            [:button.reset-speed  {:on-click reset-speed} "speed = 2x"]])))
