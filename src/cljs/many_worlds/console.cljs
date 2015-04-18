@@ -14,8 +14,10 @@
 ;;
 
 (defn frame-url
-  [world-url t]
-  (str world-url "/frame.png?t=" (.toFixed t 2)))
+  [world-url t w]
+   (str world-url "/frame.png"
+        "?t=" (.toFixed t 2)
+        (if w (str "&width=" w))))
 
 (defn state-url
   [world-url]
@@ -48,7 +50,8 @@
 
 (defonce !state
   (atom {:worlds [(location)]
-         :time {:t 0, :speed 2}}))
+         :time {:t 0, :speed 2}
+         :preview-width 320}))
 
 ;;
 ;; Application Actions
@@ -91,13 +94,14 @@
   (reify
     om/IRender
     (render [_]
-      (let [t (get-in state [:time :t] 0)]
+      (let [t (get-in state [:time :t] 0)
+            w (:preview-width state)]
         (html
           [:div.worlds
            (for [world (:worlds state)]
              [:div.world {:key world}
               [:a {:href "#", :on-click #(reset-worlds world)}
-               [:img {:src (frame-url world t)}]]])])))))
+               [:img {:src (frame-url world t w)}]]])])))))
 
 (defn- update-text
   [event owner {text :text}]
