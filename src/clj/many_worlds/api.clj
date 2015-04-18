@@ -11,7 +11,8 @@
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :as resp])
-  (:import [java.awt.image BufferedImage]
+  (:import [java.awt Color]
+           [java.awt.image BufferedImage]
            [java.io ByteArrayInputStream ByteArrayOutputStream]
            [javax.imageio ImageIO]
            [qutils.animation Animation]
@@ -32,6 +33,13 @@
                         nil)))]
      {:t t, :width (read-dim w-str), :height (read-dim h-str)})))
 
+(defn- argb->rgb
+  [image w h]
+  (let [rgb-image (BufferedImage. w h BufferedImage/TYPE_INT_RGB)
+        graphics (.createGraphics rgb-image)]
+    (.drawImage graphics image 0 0 Color/WHITE nil)
+    rgb-image))
+
 (defn ^BufferedImage render-frame
   "Given a quil sketch, the default width and height, the sketch's configure
   and draw functions, and the `t` (time) and `s` (scale) at which to render sketch,
@@ -45,7 +53,8 @@
         (configure!)
         (quil/scale (double s))
         (draw! t))
-      (.getImage g))))
+      (-> (.getImage g)
+        (argb->rgb w' h')))))
 
 (defn handler
   "Given a state atom, a var containing a quil sketch, nominal sketch width and
@@ -94,7 +103,7 @@
              (reset! !state (read-string (slurp body)))
              (resp/redirect "frame.png?t=latest"))
 
-        (GET "/frame.png" [t width height]
+        (GET "/frame.bmp" [t width height]
              (let [frame-opts {:t t, :width width, :height height}
                    {:keys [t width height]} (parse-frame-opts frame-opts @!state)
                    scale (cond
@@ -103,9 +112,9 @@
                            :else 1)
                    image (render-frame @sketch-var w h configure! draw! t scale)
                    stream (new ByteArrayOutputStream)]
-               (ImageIO/write image "PNG" stream)
+               (ImageIO/write image "BMP" stream)
                {:status 200
-                :headers {"Content-Type" "image/png"}
+                :headers {"Content-Type" "image/bmp"}
                 :body (ByteArrayInputStream. (.toByteArray stream))}))
 
         ;; console application

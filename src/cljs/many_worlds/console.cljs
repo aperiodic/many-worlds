@@ -15,7 +15,7 @@
 
 (defn frame-url
   [world-url t w]
-   (str world-url "/frame.png"
+   (str world-url "/frame.bmp"
         "?t=" (.toFixed t 2)
         (if w (str "&width=" w))))
 
