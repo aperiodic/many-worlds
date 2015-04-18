@@ -1,5 +1,6 @@
 (ns many-worlds.api
-  (:require [compojure.core :refer [GET PUT routes]]
+  (:require [clojure.edn :as edn]
+            [compojure.core :refer [GET PUT routes]]
             [compojure.route :as route]
             [quil.core :as quil]
             [quil.applet :refer [*applet*]]
@@ -15,16 +16,17 @@
 (defn parse-frame-opts
   ([opts] (parse-frame-opts opts nil))
   ([opts state]
-   (let [{t-str :t, s-str :s} opts
-         s (let [s (read-string (or s-str "latest"))]
-             (if (and (number? s) (not (zero? s)))
-               (/ s 100)
-               1))
-         t (let [t (read-string (or t-str "latest"))]
+   (let [{t-str :t, w-str :width, h-str :height} opts
+         t (let [t (edn/read-string (or t-str "latest"))]
              (if (number? t)
                t
-               (or (-> state :path keys last) 0)))]
-     {:s s, :t t})))
+               (or (-> state :path keys last) 0)))
+         read-dim (fn [string]
+                    (let [value (edn/read-string (or string "-1"))]
+                      (if (and (number? value) (pos? value))
+                        value
+                        nil)))]
+     {:t t, :width (read-dim w-str), :height (read-dim h-str)})))
 
 (defn ^BufferedImage render-frame
   "Given a quil sketch, the default width and height, the sketch's configure
@@ -70,14 +72,16 @@
 
     - GET '/frame.png'
       Return a PNG rendering of the sketch by calling the `configure!` and
-      `draw!` functions. Accepts two query parameters: `t` and `scale`. The size
-      of the frame is determined by multiplying the given `w` and `h` dimensions
-      by `scale`, which is a percentage and defaults to 100 (full size). The
-      time of the frame is governed by the `t` query parameter. If it's a number
-      that number is used directly; if it's not a number, or it's not provided,
-      then the time corresponding to the start of the last generated bezier
-      segment of the random walk is used.
-  "
+      `draw!` functions. Accepts three query parameters: `t`, `width` and
+      `height`. The size of the frame may be defined by specifying either the
+      `width` or `height` in pixels. The returned image will have the specified
+      length in that dimension, with the other dimension scaled as appropriate
+      to preserve the sketch's aspect ratio. If both are specified, only the
+      `width` value is used, and the height is again derived using the aspect
+      ratio. The time of the frame is governed by the `t` query parameter. If
+      it's a number that number is used directly; if it's not a number, or it's
+      not provided, then the time corresponding to the start of the last
+      generated bezier segment of the random walk is used."
   [!state sketch-var w h configure! draw!]
   (-> (routes
         (GET "/state" [] (pr-str @!state))
@@ -86,9 +90,14 @@
              (restore-state !state state-str)
              (resp/redirect "frame.png?t=latest"))
 
-        (GET "/frame.png" [t scale]
-             (let [{:keys [t s]} (parse-frame-opts {:t t, :s scale} @!state)
-                   image (render-frame @sketch-var w h configure! draw! t s)
+        (GET "/frame.png" [t width height]
+             (let [frame-opts {:t t, :width width, :height height}
+                   {:keys [t width height]} (parse-frame-opts frame-opts @!state)
+                   scale (cond
+                           width (/ width (* w 1.0))
+                           height (/ height (* h 1.0))
+                           :else 1)
+                   image (render-frame @sketch-var w h configure! draw! t scale)
                    stream (new ByteArrayOutputStream)]
                (ImageIO/write image "PNG" stream)
                {:status 200
