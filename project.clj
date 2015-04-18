@@ -32,5 +32,6 @@
                               :optimizations :none
                               :source-map true}}}}
 
-  :figwheel {:server-port 3449}
+  :figwheel {:server-port 3449
+             :css-dirs ["resources/public/css"]}
   :ring {:handler many-worlds.api.dev/dev-handler})

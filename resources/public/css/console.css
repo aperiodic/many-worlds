@@ -1,0 +1,34 @@
+#time {
+  font-size: 24px;
+  margin-bottom: 0.5em;
+}
+
+#time button {
+  font-size: 28px;
+}
+
+#time .time-display {
+  margin-left: 0.5em;
+  margin-right: 0.25em;
+}
+
+#time .speed-display {
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+}
+
+.world {
+  float: left;
+  margin: 2px;
+}
+
+#add-world {
+  position: fixed;
+  bottom: 0px;
+}
+
+#add-world input {
+  width: 30em;
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+}
