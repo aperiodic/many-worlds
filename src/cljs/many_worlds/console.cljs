@@ -28,6 +28,21 @@
     (str/replace #"/$" "")))
 
 ;;
+;; Constants
+;;
+
+(def jump-delta-t
+  "In order to calculate how far to jump around when skipping, multiply this
+  delta by the current speed. With the default speed of 2 the jump will be twice
+  this value, in seconds."
+  1.0)
+
+(def delta-t-ms
+  "The time delta for previews; previews update at this interval in ms, and they
+  advance by this interval in ms times the current speed."
+  100)
+
+;;
 ;; State
 ;;
 
@@ -104,17 +119,6 @@
                   :on-change #(update-text % owner comp-state)}]
          [:button {:on-click #(add-world state owner)}
           "Add World"]]))))
-
-(def jump-delta-t
-  "In order to calculate how far to jump around when skipping, multiply this
-  delta by the current speed. With the default speed of 2 the jump will be twice
-  this value, in seconds."
-  1.0)
-
-(def delta-t-ms
-  "The time delta for previews; previews update at this interval in ms, and they
-  advance by this interval in ms times the current speed."
-  90)
 
 (defonce time-control (chan 1))
 
