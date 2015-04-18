@@ -4,14 +4,17 @@
             [compojure.route :as route]
             [quil.core :as quil]
             [quil.applet :refer [*applet*]]
-            [qutils.util :refer [restore-state]]
+            [qutils.animation :as _a] ; purely to load the defrecords
+            [qutils.curve :as _c] ; purely to load the defrecords
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :as resp])
   (:import [java.awt.image BufferedImage]
            [java.io ByteArrayInputStream ByteArrayOutputStream]
-           [javax.imageio ImageIO]))
+           [javax.imageio ImageIO]
+           [qutils.animation Animation]
+           [qutils.curve Curve]))
 
 (defn parse-frame-opts
   ([opts] (parse-frame-opts opts nil))
@@ -86,8 +89,8 @@
   (-> (routes
         (GET "/state" [] (pr-str @!state))
 
-        (PUT "/state" [state-str]
-             (restore-state !state state-str)
+        (PUT "/state" [:as {body :body}]
+             (reset! !state (read-string (slurp body)))
              (resp/redirect "frame.png?t=latest"))
 
         (GET "/frame.png" [t width height]
