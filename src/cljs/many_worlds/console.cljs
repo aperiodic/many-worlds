@@ -27,7 +27,7 @@
   []
   (-> (.-location js/document)
     str
-    (str/replace #"/$" "")))
+    (str/replace #"/#?$" "")))
 
 ;;
 ;; Constants
