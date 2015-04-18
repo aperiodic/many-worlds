@@ -101,7 +101,7 @@
 
         (PUT "/state" [:as {body :body}]
              (reset! !state (read-string (slurp body)))
-             (resp/redirect "frame.png?t=latest"))
+             {:status 204})
 
         (GET "/frame.bmp" [t width height]
              (let [frame-opts {:t t, :width width, :height height}
