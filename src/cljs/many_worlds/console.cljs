@@ -78,7 +78,8 @@
 
 (defn add-world
   [state owner]
-  (let [new-world (.-value (om/get-node owner "new-world"))]
+  (let [new-world (-> (.-value (om/get-node owner "new-world"))
+                    (str/replace #"/#?$" ""))]
     (when-not (empty? new-world)
       (om/transact! state :worlds #((fnil conj []) % new-world))
       (om/set-state! owner :text ""))))
