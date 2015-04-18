@@ -7,6 +7,7 @@
             [qutils.animation :as _a] ; purely to load the defrecords
             [qutils.curve :as _c] ; purely to load the defrecords
             [ring.adapter.jetty :refer [run-jetty]]
+            [ring.middleware.cors :refer [wrap-cors]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.util.response :as resp])
@@ -111,5 +112,6 @@
         (GET "/" [] (resp/resource-response "public/index.html"))
         (route/resources ""))
 
+    (wrap-cors #".*localhost(:\d+)?")
     wrap-keyword-params
     wrap-params))

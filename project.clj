@@ -15,6 +15,7 @@
                  [aperiodic/qutils "0.1.0-SNAPSHOT"]
                  [ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
+                 [jumblerg/ring.middleware.cors "1.0.1"]
                  [sablono "0.3.4"]]
 
   :source-paths ["src/clj"]
