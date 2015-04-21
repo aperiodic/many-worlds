@@ -82,6 +82,32 @@
       used to obtain frames of the sketch at some given time `t`, to serve the
       current state of the bezier walk, and to reset the bezier walk state with
       a state submitted in a request body.
+
+  In addition to the options in the options map, you can also pass five
+  additional quil-related arguments. If all of these arguments are provided,
+  then the Many Worlds API will be started.
+
+  These arguments are:
+
+    - `sketch-var`
+      The var you pass to quil.core/defsketch that will hold your sketch.
+      This should be the var itself to avoid a cyclic dependency between your
+      sketch and its setup function (wherein you call this function).
+      This is needed because Many Worlds needs the sketch applet in order to be
+      able to render a frame of the sketch.
+
+    - `width` and `height`
+      Integers defining the nominal width and height of your sketch.
+
+    - `configure-quil!`
+      A function of no arguments that configures the global state of quil, such
+      as enabling smoothing or setting the color mode. It should not do any
+      other sort of setup such as loading data. This is needed because a new
+
+    - `draw`
+      A function that draws a frame of your sketch, and takes one argument: the
+      time of the frame to draw, in seconds. The only other piece of state this
+      function should use is the vector returned by `position-at`.
   "
   ([n state-atom] (setup! n state-atom {}))
   ([n state-atom options] (setup! n state-atom options nil nil nil nil nil))
