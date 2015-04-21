@@ -34,4 +34,7 @@
 
   :figwheel {:server-port 3449
              :css-dirs ["resources/public/css"]}
-  :ring {:handler many-worlds.api.dev/dev-handler})
+  :ring {:handler many-worlds.api.dev/dev-handler}
+
+  :deploy-repositories [["clojars" {:url "https://clojars.org/repo/"
+                                    :sign-releases false}]])
