@@ -7,8 +7,6 @@
 
 (def bezier-order 4)
 
-(def ^:private !state (atom nil))
-
 ;; this is not intended to be synchronized with the state of the bezier walk
 (def !api-state (atom {:server nil, :starter-id nil, :stopper-id nil}))
 
@@ -55,9 +53,11 @@
           (swap! !api-state assoc :server server :starter-id nil :stopper-id nil))))))
 
 (defn setup!
-  "Initialize a random bezier walk through an `n` dimensional state space. The
-  optional second argument can be a map containing options keywords to change
-  some characteristics of the random bezier walk. The relevant keys are:
+  "Initialize a random bezier walk through an `n` dimensional state space,
+  storing the walk's state in the provided atom (which will need to be passed to
+  the position-at function). The optional third argument can be a map containing
+  options keywords to change some characteristics of the random bezier walk
+  and the Many Worlds API server. The relevant keys are:
 
     - :segment-length
       The random bezier walk is composed of cubic bezier curve segments. This
@@ -83,15 +83,15 @@
       current state of the bezier walk, and to reset the bezier walk state with
       a state submitted in a request body.
   "
-  ([n] (setup! n {}))
-  ([n options] (setup! n options nil nil nil nil nil))
-  ([n options sketch-var w h configure-quil! draw!]
+  ([n state-atom] (setup! n state-atom {}))
+  ([n state-atom options] (setup! n state-atom options nil nil nil nil nil))
+  ([n state-atom options sketch-var width height configure-quil! draw]
 
    (let [{:keys [segment-length min-point max-point min max port]} (merge defaults options)
          min-point (or min-point (vec (repeat n min)))
          max-point (or max-point (vec (repeat n max)))
-         handler (if (and sketch-var w h configure-quil! draw!)
-                   (api/handler !state sketch-var w h configure-quil! draw!))]
+         handler (if (and sketch-var width height configure-quil! draw)
+                   (api/handler state-atom sketch-var width height configure-quil! draw))]
 
      (when-not (= n (count min-point) (count max-point))
        (throw (IllegalArgumentException. (str "inconsistent dimensions between `n`, `min-point`,"
@@ -105,9 +105,9 @@
 
      (let [ctrl-pts (rand-control-points bezier-order min-point max-point)
            first-segment (animation (curve/bezier ctrl-pts) 0 segment-length)]
-       (reset! !state {:path (sorted-map 0 first-segment)
-                       :n n :segment-length segment-length
-                       :max-point max-point, :min-point min-point})))))
+       (reset! state-atom {:path (sorted-map 0 first-segment)
+                           :n n :segment-length segment-length
+                           :max-point max-point, :min-point min-point})))))
 
 (defn curve-for-t
   "If there is a segment of the path in `state` that encompasses `t`, return
@@ -138,21 +138,19 @@
                                              segment-length)))))
 
 (defn position-at
-  "Return the position vector of the random bezier walk at time `t`, unless
-  state has not been initialized by calling `setup!`, in which case nil is
-  returned instead. If `t` is less than zero, the return value will be nil.
+  "Return the position vector of the random bezier walk described by the atom
+  `state` at time `t`, unless `state` has not been initialized by passing it to
+  `setup!`, in which case nil is returned instead. If `t` is less than zero, the
+  return value will be nil.
 
-  Note that this backfills this namespace's hidden state. If you're
-  fast-forwarding by giving successive ts with stride larger than the state's
-  configured segment-length, not only will you not have a smooth animation,
-  you'll be potentially allocating many animations each frame, which will not be
-  freed until `setup!` is called again."
-  [t]
-  (if-let [state @!state]
-    (cond
-      (neg? t) nil
-      (curve-for-t state t) (let [bez (curve-for-t state t)] (bez t))
-      :else (let [bez (curve-for-t (swap! !state backfill-segments t) t)]
-              (bez t)))
-    ;; else (state not yet initialized)
-    nil))
+  Note that this backfills any missing bezier path segments in `state`. If
+  you're fast-forwarding by giving successive `t`s with stride larger than the
+  state's configured segment-length, not only will you not have a smooth
+  animation, you'll be potentially allocating many animations each frame, which
+  will not be freed until `state` is reset or goes out of scope."
+  [state t]
+  (cond
+    (neg? t) nil
+    (curve-for-t @state t) (let [bez (curve-for-t @state t)] (bez t))
+    :else (let [bez (curve-for-t (swap! state backfill-segments t) t)]
+            (bez t))))
