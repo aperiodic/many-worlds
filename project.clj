@@ -1,4 +1,4 @@
-(defproject many-worlds "0.1.0-SNAPSHOT"
+(defproject many-worlds "0.1.0"
   :description "Interactive, parallel state space exploration for quil sketches."
   :url "https://github.com/aperiodic/many-worlds"
   :license {:name "Eclipse Public License"
@@ -12,7 +12,7 @@
                  [figwheel "0.2.5"]
                  [org.omcljs/om "0.8.8"]
                  [quil "1.7.0"]
-                 [aperiodic/qutils "0.1.0-SNAPSHOT"]
+                 [aperiodic/qutils "0.1.0"]
                  [ring "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
                  [jumblerg/ring.middleware.cors "1.0.1"]
