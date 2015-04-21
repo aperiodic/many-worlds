@@ -157,13 +157,13 @@
                                         (update-in time [:t] + (* speed jump-delta-t))))]
         (html
           [:div#time
-           [:button.skip-back {:on-click skip-back} "⏮"]
-           [:button.fast-backward {:on-click fb} "⏪"]
-           [:span.time-display (str "t: " (.toFixed t 1))]
+           [:button.skip-back {:on-click skip-back} [:img {:src "img/seekbackward.png"}]]
+           [:button.fast-backward {:on-click fb} [:img {:src "img/fastbackward.png"}]]
+           [:button.pause {:on-click pause} [:img {:src "img/playpause.png"}]]
+           [:span.time-display (str "t:" (.toFixed t 1))]
            [:span.speed-display (str "(" (.toFixed speed 1) "x)")]
-           [:button.pause {:on-click pause} "⏯"]
-           [:button.fast-forward {:on-click ff} "⏩"]
-           [:button.skip-ahead {:on-click skip-ahead} "⏭"]
+           [:button.fast-forward {:on-click ff} [:img {:src "img/fastforward.png"}]]
+           [:button.skip-ahead {:on-click skip-ahead} [:img {:src "img/seekforward.png"}]]
            [:button.reset-speed  {:on-click reset-speed} "speed = 2x"]])))
 
     om/IWillUnmount

@@ -9,6 +9,10 @@
   font-size: 28px;
 }
 
+#time button img {
+  width: 32px;
+}
+
 #time .time-display {
   margin-left: 0.5em;
   margin-right: 0.25em;
