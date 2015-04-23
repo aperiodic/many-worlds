@@ -80,7 +80,7 @@
 
 (defn -main
   [& [port-arg & _]]
-  (let [port (Integer/parseInt port-arg)]
+  (let [port (Integer/parseInt (or port-arg "3000"))]
     (dejong port)))
 
 (comment
