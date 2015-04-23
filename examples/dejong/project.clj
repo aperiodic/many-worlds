@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0-beta1"]
-                 [many-worlds "0.1.0-SNAPSHOT"]
+                 [many-worlds "0.1.0"]
                  [quil "1.7.0"]]
   :main ^:skip-aot many-worlds.example.dejong
   :target-path "target/%s"
